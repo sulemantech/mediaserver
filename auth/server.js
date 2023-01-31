@@ -8,7 +8,7 @@ app.use(express.urlencoded({extended: true}));
 app.post("/auth",(req, res)=>{
     console.log(req.body);
     const streamKey = req.body.key;
-    if(streamKey==="supersecrete"){
+    if(streamKey==="nosecrete"){
         res.status(200).send();
         return;
     }
