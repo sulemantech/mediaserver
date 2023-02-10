@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>File Upload/Download Client</title>
+  </head>
+  <body>
+    <h1>File Upload</h1>
+    <form>
+      <div>
+        <input type="file" id="fileInput" />
+        <input type="text" id="filename" placeholder="Enter filename" />
+        <button type="button" id="uploadBtn">Upload</button>
+      </div>
+    </form>
+    <br />
+    <h1>File Download</h1>
+    <form>
+      <div>
+        <input type="text" id="downloadFilename" placeholder="Enter filename" />
+        <button type="button" id="downloadBtn">Download</button>
+      </div>
+    </form>
+    <br />
+    <div id="response"></div>
+
+    <script>
+      const uploadBtn = document.getElementById('uploadBtn');
+      const fileInput = document.getElementById('fileInput');
+      const filename = document.getElementById('filename');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const downloadFilename = document.getElementById('downloadFilename');
+      const response = document.getElementById('response');
+
+      uploadBtn.addEventListener('click', () => {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const base64Data = reader.result.replace(/^data:.*,/, '');
+
+          fetch('http://localhost:3000/upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              filename: filename.value,
+              file: reader.result
+            })
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              response.innerHTML = `<p>${data.message}</p>`;
+            })
+            .catch((err) => {
+              response.innerHTML = `<p>${err}</p>`;
+            });
+        };
+      });
+
+      downloadBtn.addEventListener('click', () => {
+        fetch(`http://localhost:3000/download?filename=${downloadFilename.value}`)
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error(res.statusText);
+            }
+
+            return res.blob();
+          })
+          .then((blob) => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = downloadFilename.value;
+            link.click();
+            URL.revokeObjectURL(url);
+          })
+          .catch((err) => {
+            response.innerHTML = `<p>${err}</p>`;
+          });
+      });
+    </script>
+  </body>
